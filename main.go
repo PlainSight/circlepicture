@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"image/png"
 	"math"
@@ -57,6 +58,7 @@ func main() {
 	minCircle := int(math.Min(float64(width), float64(height))/300) + 1
 
 	outputImage := image.NewRGBA(inputImage.Bounds())
+	zImage := image.NewGray16(inputImage.Bounds())
 
 	limit := width * height / 200
 
@@ -102,7 +104,11 @@ func main() {
 			for xx := x - r; xx <= x+r; xx++ {
 				for yy := y - r; yy <= y+r; yy++ {
 					if (x-xx)*(x-xx)+(y-yy)*(y-yy) < r*r {
-						outputImage.SetRGBA(xx, yy, pickedCol)
+						existingRadius := int(zImage.Gray16At(xx, yy).Y)
+						if r < existingRadius || existingRadius == 0 {
+							outputImage.SetRGBA(xx, yy, pickedCol)
+							zImage.SetGray16(xx, yy, color.Gray16{Y: uint16(r)})
+						}
 					}
 				}
 			}
