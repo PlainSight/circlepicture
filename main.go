@@ -85,7 +85,7 @@ func main() {
 
 			for xx := x - r; xx <= x+r; xx++ {
 				for yy := y - r; yy <= y+r; yy++ {
-					if (x-xx)*(x-xx)+(y-yy)*(y-yy) < r*r {
+					if (x-xx)*(x-xx)+(y-yy)*(y-yy) <= r*r {
 						col := inputImage.RGBAAt(xx, yy)
 
 						diffr := Abs(int(pickedCol.R - col.R))
