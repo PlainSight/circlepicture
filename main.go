@@ -55,7 +55,7 @@ func main() {
 	width := imageBounds.Max.X
 	height := imageBounds.Max.Y
 
-	minCircle := int(math.Min(float64(width), float64(height))/300) + 1
+	//minCircle := int(math.Min(float64(width), float64(height))/300) + 1
 
 	outputImage := image.NewRGBA(inputImage.Bounds())
 	zImage := image.NewGray16(inputImage.Bounds())
@@ -76,29 +76,29 @@ func main() {
 		// start with a radius of 2, then increase from there
 		// determine average difference of all colours within radius to initial colour and stop at a certain cut off
 
-		radius := minCircle
-		var averageDifference float32 = 0.0
+		//radius := minCircle
+		//var averageDifference float32 = 0.0
 
-		calculateAverageDifference := func(x int, y int, r int) float32 {
-			diffSum := 1
-			diffCount := 0
+		// calculateAverageDifference := func(x int, y int, r int) float32 {
+		// 	diffSum := 1
+		// 	diffCount := 0
 
-			for xx := x - r; xx <= x+r; xx++ {
-				for yy := y - r; yy <= y+r; yy++ {
-					if (x-xx)*(x-xx)+(y-yy)*(y-yy) <= r*r {
-						col := inputImage.RGBAAt(xx, yy)
+		// 	for xx := x - r; xx <= x+r; xx++ {
+		// 		for yy := y - r; yy <= y+r; yy++ {
+		// 			if (x-xx)*(x-xx)+(y-yy)*(y-yy) <= r*r {
+		// 				col := inputImage.RGBAAt(xx, yy)
 
-						diffr := Abs(int(pickedCol.R - col.R))
-						diffg := Abs(int(pickedCol.G - col.G))
-						diffb := Abs(int(pickedCol.B - col.B))
-						diffSum += diffr + diffg + diffb
-						diffCount += 3
-					}
-				}
-			}
+		// 				diffr := Abs(int(pickedCol.R - col.R))
+		// 				diffg := Abs(int(pickedCol.G - col.G))
+		// 				diffb := Abs(int(pickedCol.B - col.B))
+		// 				diffSum += diffr + diffg + diffb
+		// 				diffCount += 3
+		// 			}
+		// 		}
+		// 	}
 
-			return float32(diffSum) / float32(diffCount)
-		}
+		// 	return float32(diffSum) / float32(diffCount)
+		// }
 
 		fillCircle := func(x int, y int, r int) {
 			for xx := x - r; xx <= x+r; xx++ {
@@ -114,22 +114,68 @@ func main() {
 			}
 		}
 
-		dr := minCircle
+		colourDiff := func(c1 color.RGBA, c2 color.RGBA) int {
+			diffr := Abs(int(c1.R - c2.R))
+			diffg := Abs(int(c1.G - c2.G))
+			diffb := Abs(int(c1.B - c2.B))
+			return diffr + diffg + diffb
+		}
 
-		for {
-			averageDifference = calculateAverageDifference(rx, ry, radius+dr)
-			if averageDifference > 30 {
-				break
+		type vector struct {
+			x int
+			y int
+		}
+
+		calculateRadius := func(x int, y int) int {
+			var stack []vector
+			visited := make(map[vector]struct{})
+
+			stack = append(stack, vector{x: x, y: y})
+
+			count := 0
+
+			for len(stack) > 0 {
+				popped := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+
+				_, exists := visited[popped]
+
+				if exists || popped.x < 0 && popped.x >= width && popped.y < 0 || popped.y >= height || count > 10000 {
+					continue
+				}
+
+				count++
+
+				visited[popped] = struct{}{}
+
+				if colourDiff(inputImage.RGBAAt(popped.x, popped.y), pickedCol) < 60 {
+					stack = append(stack,
+						vector{x: popped.x + 1, y: popped.y},
+						vector{x: popped.x - 1, y: popped.y},
+						vector{x: popped.x, y: popped.y + 1},
+						vector{x: popped.x, y: popped.y - 1})
+				}
 			}
-			radius += dr
+
+			return int(math.Sqrt(float64(count)))
 		}
 
-		fillCircle(rx, ry, radius)
+		// dr := minCircle
 
-		if radius > 10 {
-			// draw in circle
-			i++
-		}
+		// for {
+		// 	averageDifference = calculateAverageDifference(rx, ry, radius+dr)
+		// 	if averageDifference > 30 {
+		// 		break
+		// 	}
+		// 	radius += dr
+		// }
+
+		fillCircle(rx, ry, calculateRadius(rx, ry))
+
+		//if radius > 10 {
+		// draw in circle
+		i++
+		//}
 	}
 
 	elapsed := time.Since(startTime)
