@@ -103,7 +103,7 @@ func main() {
 		fillCircle := func(x int, y int, r int) {
 			for xx := x - r; xx <= x+r; xx++ {
 				for yy := y - r; yy <= y+r; yy++ {
-					if (x-xx)*(x-xx)+(y-yy)*(y-yy) < r*r {
+					if (x-xx)*(x-xx)+(y-yy)*(y-yy) <= r*r {
 						existingRadius := int(zImage.Gray16At(xx, yy).Y)
 						if r < existingRadius || existingRadius == 0 {
 							outputImage.SetRGBA(xx, yy, pickedCol)
